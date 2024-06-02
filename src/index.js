@@ -1,12 +1,37 @@
-const http = require('http');
+const http = require("http");
+const fs = require("fs");
+const url = require("url");
+
+const getUsers = require("./modules/users");
+
+const hostname = "127.0.0.1";
+const port = 3003;
 
 const server = http.createServer((request, response) => {
+  const reqUrl = url.parse(request.url, true);
 
-    // Написать обработчик запроса:
-    // - Ответом на запрос `?hello=<name>` должна быть **строка** "Hello, <name>.", код ответа 200
-    // - Если параметр `hello` указан, но не передано `<name>`, то ответ **строка** "Enter a name", код ответа 400
-    // - Ответом на запрос `?users` должен быть **JSON** с содержимым файла `data/users.json`, код ответа 200
-    // - Если никакие параметры не переданы, то ответ **строка** "Hello, World!", код ответа 200
-    // - Если переданы какие-либо другие параметры, то пустой ответ, код ответа 500
+  if (reqUrl.query.hello != undefined) {
+    if (reqUrl.query.hello === "") {
+      response.writeHead(400, { "Content-Type": "text/plain" });
+      response.end("Enter a name");
+    } else {
+      response.writeHead(200, { "Content-Type": "text/plain" });
+      response.end(`Hello, ${reqUrl.query.hello}.`);
+    }
+  } else if (request.url === "/?users") {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.write(getUsers());
+    response.end();
+  } else if (Object.keys(reqUrl.query).length > 0) {
+    response.writeHead(500, { "Content-Type": "text/plain" });
+    response.end();
+  } else {
+    response.writeHead(200, { "Content-Type": "text/plain" });
+    console.log(reqUrl.query);
+    response.end("Hello, world!");
+  }
+});
 
+server.listen(port, hostname, () => {
+  console.log(`Сервер запущен по адресу http://${hostname}:${port}`);
 });
